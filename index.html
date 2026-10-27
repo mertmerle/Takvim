@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Not Takvimi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF1F0; --surface:#FFFFFF; --ink:#13302F; --muted:#5E7472; --line:#D3DCDA;
+  --accent:#0F5257; --accent-ink:#FFFFFF; --mark:#E8A33D; --mark-soft:#FBEBD0; --today:#DCEBE9; --danger:#B3403A;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1A1A; --surface:#152525; --ink:#E4EEEC; --muted:#93A9A6; --line:#26393A;
+    --accent:#5FB3B0; --accent-ink:#0E1A1A; --mark:#F0B455; --mark-soft:#3A2F1C; --today:#1D3434; --danger:#E07B74;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1A1A; --surface:#152525; --ink:#E4EEEC; --muted:#93A9A6; --line:#26393A;
+  --accent:#5FB3B0; --accent-ink:#0E1A1A; --mark:#F0B455; --mark-soft:#3A2F1C; --today:#1D3434; --danger:#E07B74;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 20px 48px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+h1{font-family:"Bricolage Grotesque","Figtree",system-ui,sans-serif;font-weight:800;font-size:clamp(2.6rem,7vw,4.6rem);line-height:.9;letter-spacing:-.03em;margin:0}
+h1 .yr{display:block;font-weight:400;font-size:.42em;letter-spacing:0;color:var(--muted);margin-top:.35em}
+.nav{display:flex;gap:8px;align-items:center}
+button{font:inherit;cursor:pointer}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 16px;font-weight:600}
+.btn:hover{border-color:var(--accent)}
+.btn.icon{width:42px;height:42px;padding:0;display:grid;place-items:center;font-size:1.2rem}
+:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+.status{font-size:.85rem;color:var(--muted);min-height:1.3em;margin:-10px 0 14px}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.dow{font-size:.85rem;font-weight:600;color:var(--muted);padding:0 8px 4px}
+.day{position:relative;min-height:112px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 9px;text-align:left;color:var(--ink);display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.day:hover{border-color:var(--accent)}
+.day.out{background:transparent;color:var(--muted);opacity:.6}
+.day.today{background:var(--today);border-color:var(--accent)}
+.day .n{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600;font-size:1.15rem;line-height:1}
+.day.today .n{color:var(--accent)}
+.day .snip{font-size:.8rem;line-height:1.3;background:var(--mark-soft);border-left:3px solid var(--mark);border-radius:4px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day .more{font-size:.75rem;color:var(--muted)}
+.day .dot{display:none}
+/* panel */
+.scrim{position:fixed;inset:0;background:rgba(10,20,20,.45);opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.open{opacity:1;pointer-events:auto}
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);background:var(--surface);border-left:1px solid var(--line);transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;padding:calc(22px + env(safe-area-inset-top,0px)) 22px calc(22px + env(safe-area-inset-bottom,0px))}
+.panel.open{transform:none}
+.panel h2{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:2rem;line-height:1;margin:0}
+.panel .wd{color:var(--muted);margin:4px 0 18px}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.notes{list-style:none;margin:0 0 16px;padding:0;overflow:auto;flex:1;display:flex;flex-direction:column;gap:8px}
+.note{display:flex;gap:10px;align-items:flex-start;background:var(--mark-soft);border-left:3px solid var(--mark);border-radius:8px;padding:10px 10px 10px 12px}
+.note p{margin:0;flex:1;white-space:pre-wrap;word-break:break-word}
+.note .del{border:0;background:transparent;color:var(--muted);font-size:.85rem;padding:2px 4px;border-radius:6px}
+.note .del:hover{color:var(--danger)}
+.empty{color:var(--muted);font-size:.95rem}
+textarea{width:100%;min-height:96px;resize:vertical;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.add{margin-top:10px;width:100%;border:0;border-radius:12px;padding:12px;background:var(--accent);color:var(--accent-ink);font-weight:600}
+.add:disabled{opacity:.5;cursor:default}
+.hint{font-size:.8rem;color:var(--muted);margin-top:6px}
+@media (max-width:640px){
+  .wrap{padding:18px 10px 32px}
+  .grid{gap:4px}
+  .day{min-height:64px;padding:6px;border-radius:10px;align-items:center}
+  .day .snip,.day .more{display:none}
+  .day .dot{display:block;width:7px;height:7px;border-radius:50%;background:var(--mark);margin-top:auto}
+  .dow{padding:0;text-align:center;font-size:.75rem}
+}
+@media (prefers-reduced-motion:reduce){.panel,.scrim{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">Ekim<span class="yr">2026</span></h1>
+    <div class="nav">
+      <button class="btn icon" id="prev" aria-label="Önceki ay">‹</button>
+      <button class="btn" id="todayBtn">Bugün</button>
+      <button class="btn icon" id="next" aria-label="Sonraki ay">›</button>
+    </div>
+  </header>
+  <div class="status" id="status" aria-live="polite"></div>
+  <div class="grid" id="dows"></div>
+  <div class="grid" id="days" style="margin-top:4px"></div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="panel" id="panel" aria-hidden="true" role="dialog" aria-labelledby="pTitle">
+  <div class="ph">
+    <div>
+      <h2 id="pTitle">27 Ekim</h2>
+      <div class="wd" id="pWd">Salı</div>
+    </div>
+    <button class="btn icon" id="close" aria-label="Kapat">✕</button>
+  </div>
+  <ul class="notes" id="notes"></ul>
+  <label for="txt" class="hint" style="margin:0 0 6px">Yeni not</label>
+  <textarea id="txt" placeholder="Bu güne bir not yaz…"></textarea>
+  <button class="add" id="addBtn" disabled>Notu ekle</button>
+  <div class="hint">Ctrl + Enter ile de ekleyebilirsin.</div>
+</aside>
+
+<script>
+const AYLAR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+const GUNLER=["Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi","Pazar"];
+const KISA=["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"];
+const LS_KEY="not-takvimi-v1";
+
+let notes={};            // { "2026-10-27": [{id,text}] }
+let view=new Date(); view.setDate(1);
+let selected=null;
+
+const $=id=>document.getElementById(id);
+const key=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const status=t=>{$("status").textContent=t};
+
+$("dows").innerHTML=KISA.map(g=>`<div class="dow">${g}</div>`).join("");
+
+function render(){
+  const y=view.getFullYear(), m=view.getMonth();
+  $("title").innerHTML="";
+  $("title").append(AYLAR[m]);
+  const s=document.createElement("span");s.className="yr";s.textContent=y;$("title").append(s);
+  const first=new Date(y,m,1);
+  const offset=(first.getDay()+6)%7;
+  const start=new Date(y,m,1-offset);
+  const todayK=key(new Date());
+  const box=$("days"); box.innerHTML="";
+  const cells=Math.ceil((offset+new Date(y,m+1,0).getDate())/7)*7;
+  for(let i=0;i<cells;i++){
+    const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
+    const k=key(d), list=notes[k]||[];
+    const b=document.createElement("button");
+    b.className="day"+(d.getMonth()!==m?" out":"")+(k===todayK?" today":"");
+    b.setAttribute("aria-label",`${d.getDate()} ${AYLAR[d.getMonth()]}, ${list.length} not`);
+    const n=document.createElement("span");n.className="n";n.textContent=d.getDate();b.append(n);
+    list.slice(0,2).forEach(x=>{const sp=document.createElement("span");sp.className="snip";sp.textContent=x.text;b.append(sp)});
+    if(list.length>2){const mo=document.createElement("span");mo.className="more";mo.textContent=`+${list.length-2} not daha`;b.append(mo)}
+    if(list.length){const dot=document.createElement("span");dot.className="dot";b.append(dot)}
+    b.onclick=()=>openDay(d);
+    box.append(b);
+  }
+}
+
+function openDay(d){
+  selected=d;
+  $("pTitle").textContent=`${d.getDate()} ${AYLAR[d.getMonth()]} ${d.getFullYear()}`;
+  $("pWd").textContent=GUNLER[(d.getDay()+6)%7];
+  renderNotes();
+  $("panel").classList.add("open");$("scrim").classList.add("open");
+  $("panel").setAttribute("aria-hidden","false");
+  setTimeout(()=>$("txt").focus(),150);
+}
+function closePanel(){
+  $("panel").classList.remove("open");$("scrim").classList.remove("open");
+  $("panel").setAttribute("aria-hidden","true");selected=null;
+}
+function renderNotes(){
+  const ul=$("notes"); ul.innerHTML="";
+  const list=notes[key(selected)]||[];
+  if(!list.length){const li=document.createElement("li");li.className="empty";li.textContent="Bu gün için henüz not yok. Aşağıya yazıp ekleyebilirsin.";ul.append(li);return}
+  list.forEach(x=>{
+    const li=document.createElement("li");li.className="note";
+    const p=document.createElement("p");p.textContent=x.text;
+    const del=document.createElement("button");del.className="del";del.textContent="Sil";del.setAttribute("aria-label","Notu sil");
+    del.onclick=()=>{notes[key(selected)]=list.filter(n=>n.id!==x.id);if(!notes[key(selected)].length)delete notes[key(selected)];persist();renderNotes();render()};
+    li.append(p,del);ul.append(li);
+  });
+}
+function addNote(){
+  const t=$("txt").value.trim(); if(!t||!selected)return;
+  const k=key(selected);
+  (notes[k]=notes[k]||[]).push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),text:t});
+  $("txt").value="";$("addBtn").disabled=true;
+  persist();renderNotes();render();
+}
+
+function persist(){
+  try{localStorage.setItem(LS_KEY,JSON.stringify(notes))}catch(e){status("Notlar kaydedilemedi: tarayıcı depolaması kapalı olabilir.")}
+}
+
+$("txt").addEventListener("input",()=>{$("addBtn").disabled=!$("txt").value.trim()});
+$("txt").addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();addNote()}});
+$("addBtn").onclick=addNote;
+$("close").onclick=closePanel;$("scrim").onclick=closePanel;
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&selected)closePanel()});
+$("prev").onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);render()};
+$("next").onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);render()};
+$("todayBtn").onclick=()=>{const t=new Date();view=new Date(t.getFullYear(),t.getMonth(),1);render()};
+
+// 1) Load local copy right away
+try{const raw=localStorage.getItem(LS_KEY);if(raw)notes=JSON.parse(raw)||{}}catch(e){notes={}}
+render();
+
+</script>
+</body>
+</html>
